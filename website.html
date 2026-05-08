@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kelimeci — Türkçe Kelime Bulmaca Oyunu</title>
+  <meta name="description" content="7 oyun modlu Türkçe kelime bulmaca oyunu. Anagram, Wordle tarzı tahmin, Adam Asmaca ve daha fazlası. Her gün yeni bulmaca, serini koru, liderlik tablosunda yarış." />
+  <meta property="og:title" content="Kelimeci — Türkçe Kelime Bulmaca Oyunu" />
+  <meta property="og:description" content="7 oyun modu. Günlük bulmaca. Liderlik tablosu. Türkçeye özel tasarım." />
+  <meta property="og:type" content="website" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --bg2: #111;
+      --surface: #1a1a1a;
+      --surface2: #242424;
+      --border: #2a2a2a;
+      --border2: #383838;
+      --text: #f0ece3;
+      --text-muted: #888;
+      --text-dim: #555;
+      --accent: #e8c547;     /* yellow — primary */
+      --accent2: #5bc47a;    /* green — correct */
+      --accent3: #c47a5b;    /* orange — present */
+      --accent4: #6c6c6c;    /* gray — absent */
+
+      --ease-out: cubic-bezier(0.0, 0.0, 0.2, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    ::selection { background: var(--accent); color: var(--bg); }
+
+    /* ─────────────  NAV  ───────────── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 18px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      background: rgba(10, 10, 10, 0.6);
+      border-bottom: 1px solid transparent;
+      transition: border-color 300ms ease, background 300ms ease;
+    }
+    nav.scrolled {
+      border-bottom-color: var(--border);
+      background: rgba(10, 10, 10, 0.85);
+    }
+    .nav-logo {
+      display: flex; gap: 3px;
+      align-items: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.5px;
+    }
+    .nav-logo-tile {
+      width: 26px; height: 26px;
+      border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      transition: transform 200ms var(--ease-spring);
+    }
+    .nav-logo:hover .nav-logo-tile {
+      transform: rotate(-8deg);
+    }
+    .nav-logo:hover .nav-logo-tile:nth-child(2) { transform: rotate(8deg); transition-delay: 50ms; }
+    .nav-logo-tile.y { background: var(--accent); color: var(--bg); }
+    .nav-logo-tile.g { background: var(--accent2); color: var(--bg); }
+    .nav-logo-text { margin-left: 8px; }
+
+    .nav-links {
+      display: flex; gap: 32px;
+      font-size: 14px;
+      align-items: center;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 200ms ease;
+      position: relative;
+    }
+    .nav-links a:not(.nav-cta)::after {
+      content: '';
+      position: absolute;
+      left: 0; bottom: -4px;
+      width: 0; height: 1px;
+      background: var(--accent);
+      transition: width 250ms var(--ease-out);
+    }
+    .nav-links a:not(.nav-cta):hover { color: var(--text); }
+    .nav-links a:not(.nav-cta):hover::after { width: 100%; }
+
+    .nav-cta {
+      padding: 8px 18px;
+      background: var(--accent);
+      color: var(--bg) !important;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: transform 200ms var(--ease-spring), box-shadow 200ms ease;
+    }
+    .nav-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(232, 197, 71, 0.3);
+    }
+
+    @media (max-width: 700px) {
+      nav { padding: 14px 20px; }
+      .nav-links { gap: 16px; font-size: 13px; }
+      .nav-links a:not(.nav-cta) { display: none; }
+    }
+
+    /* ─────────────  HERO  ───────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 120px 24px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ambient gradient blob */
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -10%; left: 50%;
+      transform: translateX(-50%);
+      width: 800px; height: 800px;
+      background: radial-gradient(circle,
+        rgba(232,197,71,0.08) 0%,
+        rgba(91,196,122,0.04) 30%,
+        transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .hero-tagline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+      animation: fadeSlideDown 500ms var(--ease-out) 200ms both;
+    }
+    .hero-tagline-dot {
+      width: 6px; height: 6px;
+      background: var(--accent2);
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(91,196,122,0.6);
+      animation: pulseDot 2s ease infinite;
+    }
+    @keyframes pulseDot {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(91,196,122,0.6); }
+      50% { box-shadow: 0 0 0 6px rgba(91,196,122,0); }
+    }
+
+    /* the big tile word */
+    .hero-tiles {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 36px;
+      perspective: 1000px;
+    }
+    .hero-tile {
+      width: clamp(48px, 11vw, 88px);
+      height: clamp(48px, 11vw, 88px);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(22px, 5vw, 40px);
+      color: var(--bg);
+      background: var(--surface2);
+      border: 2px solid var(--border2);
+      color: var(--text);
+      transform-style: preserve-3d;
+      animation: tileFlip 600ms var(--ease-spring) both;
+      animation-delay: var(--d, 0s);
+    }
+    .hero-tile.flipped {
+      animation: tileFlipColor 600ms var(--ease-spring) both;
+      animation-delay: var(--d, 0s);
+    }
+    @keyframes tileFlip {
+      0%   { transform: rotateX(0deg) scale(0.5); opacity: 0; }
+      40%  { transform: rotateX(90deg) scale(1); opacity: 1; }
+      100% { transform: rotateX(0deg) scale(1); opacity: 1; }
+    }
+    @keyframes tileFlipColor {
+      0%   { transform: rotateX(0deg) scale(0.5); opacity: 0; background: var(--surface2); border-color: var(--border2); }
+      39%  { background: var(--surface2); border-color: var(--border2); color: var(--text); }
+      40%  { transform: rotateX(90deg) scale(1); opacity: 1; }
+      41%  { background: var(--tile-color); border-color: var(--tile-color); color: var(--bg); }
+      100% { transform: rotateX(0deg) scale(1); opacity: 1; background: var(--tile-color); border-color: var(--tile-color); color: var(--bg); }
+    }
+
+    h1.hero-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(32px, 5.5vw, 56px);
+      line-height: 1.05;
+      letter-spacing: -1.5px;
+      max-width: 880px;
+      margin-bottom: 20px;
+      animation: fadeSlideUp 600ms var(--ease-out) 1.6s both;
+    }
+    h1.hero-title em {
+      font-style: normal;
+      color: var(--accent);
+      position: relative;
+      white-space: nowrap;
+    }
+    h1.hero-title em::after {
+      content: '';
+      position: absolute;
+      bottom: 4px; left: 0;
+      width: 100%; height: 12px;
+      background: rgba(232,197,71,0.15);
+      z-index: -1;
+      border-radius: 2px;
+    }
+
+    .hero-sub {
+      font-size: clamp(15px, 2vw, 18px);
+      color: var(--text-muted);
+      max-width: 580px;
+      margin-bottom: 40px;
+      animation: fadeSlideUp 600ms var(--ease-out) 1.8s both;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeSlideUp 600ms var(--ease-out) 2s both;
+    }
+    .btn {
+      padding: 14px 26px;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      font-size: 15px;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: transform 200ms var(--ease-spring), box-shadow 200ms ease, background 200ms ease;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+    }
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(232, 197, 71, 0.35);
+    }
+    .btn-primary:active { transform: translateY(-1px) scale(0.98); }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border2);
+    }
+    .btn-secondary:hover {
+      background: var(--surface);
+      border-color: var(--text-muted);
+      transform: translateY(-3px);
+    }
+
+    /* scroll cue */
+    .scroll-cue {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      animation: fadeSlideUp 800ms var(--ease-out) 2.4s both, bobUp 2s ease infinite 2.4s;
+    }
+    @keyframes bobUp {
+      0%, 100% { transform: translate(-50%, 0); }
+      50% { transform: translate(-50%, -6px); }
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeSlideDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─────────────  SECTION COMMON  ───────────── */
+    section.content {
+      padding: 100px 32px;
+      max-width: 1180px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .section-eyebrow {
+      display: inline-block;
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 500;
+      margin-bottom: 14px;
+    }
+
+    h2.section-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: clamp(28px, 4.5vw, 44px);
+      line-height: 1.1;
+      letter-spacing: -1px;
+      margin-bottom: 20px;
+      max-width: 700px;
+    }
+
+    .section-lede {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 580px;
+      margin-bottom: 56px;
+    }
+
+    /* reveal animation */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 700ms var(--ease-out), transform 700ms var(--ease-out);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* ─────────────  MODES  ───────────── */
+    .modes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .mode-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 24px;
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+      transition: transform 350ms var(--ease-spring),
+                  border-color 250ms ease,
+                  box-shadow 350ms ease;
+    }
+    .mode-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at var(--mx, 50%) var(--my, 0%),
+                  rgba(232,197,71,0.08), transparent 50%);
+      opacity: 0;
+      transition: opacity 300ms ease;
+      pointer-events: none;
+    }
+    .mode-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--border2);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+    }
+    .mode-card:hover::before { opacity: 1; }
+
+    .mode-num {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+      margin-bottom: 16px;
+    }
+    .mode-icon {
+      width: 44px; height: 44px;
+      background: var(--surface2);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 18px;
+      font-size: 22px;
+      transition: transform 400ms var(--ease-spring);
+    }
+    .mode-card:hover .mode-icon {
+      transform: rotate(-8deg) scale(1.1);
+    }
+    .mode-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 19px;
+      margin-bottom: 8px;
+      letter-spacing: -0.3px;
+    }
+    .mode-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .mode-card.featured {
+      grid-column: span 2;
+      background: linear-gradient(135deg, var(--surface) 0%, #1f1d12 100%);
+      border-color: rgba(232,197,71,0.3);
+    }
+    @media (max-width: 700px) {
+      .mode-card.featured { grid-column: span 1; }
+    }
+    .mode-card.featured .mode-icon {
+      background: var(--accent);
+      color: var(--bg);
+    }
+    .mode-tag {
+      position: absolute;
+      top: 20px; right: 20px;
+      padding: 4px 10px;
+      background: rgba(232,197,71,0.12);
+      color: var(--accent);
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+    }
+
+    /* ─────────────  FEATURES  ───────────── */
+    .features-bg {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 0;
+    }
+    .feature {
+      padding: 36px 28px;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      transition: background 250ms ease;
+    }
+    .feature:hover { background: var(--surface); }
+    .feature:nth-child(4n) { border-right: none; }
+    @media (max-width: 1100px) {
+      .feature:nth-child(4n) { border-right: 1px solid var(--border); }
+      .feature:nth-child(2n) { border-right: none; }
+    }
+    @media (max-width: 600px) {
+      .feature { border-right: none !important; }
+    }
+
+    .feature-emoji {
+      font-size: 24px;
+      margin-bottom: 14px;
+      display: inline-block;
+      transition: transform 300ms var(--ease-spring);
+    }
+    .feature:hover .feature-emoji {
+      transform: rotate(-12deg) scale(1.15);
+    }
+    .feature-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+    .feature-desc {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ─────────────  STATS / PROOF  ───────────── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .stat {
+      background: var(--surface);
+      padding: 36px 24px;
+      text-align: center;
+    }
+    .stat-num {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(34px, 4vw, 48px);
+      color: var(--accent);
+      letter-spacing: -1.5px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ─────────────  HOW IT WORKS / WORDLE DEMO  ───────────── */
+    .demo-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 56px 32px;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+    @media (max-width: 800px) {
+      .demo-wrapper { grid-template-columns: 1fr; padding: 32px 24px; }
+    }
+    .demo-text h3 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 28px;
+      letter-spacing: -0.5px;
+      margin-bottom: 14px;
+    }
+    .demo-text p {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin-bottom: 12px;
+    }
+    .demo-text ul {
+      list-style: none;
+      margin-top: 16px;
+    }
+    .demo-text ul li {
+      padding: 8px 0 8px 22px;
+      position: relative;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .demo-text ul li::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 14px;
+      width: 12px; height: 12px;
+      border-radius: 3px;
+      background: var(--mark, var(--accent2));
+    }
+    .demo-text ul li.orange::before { background: var(--accent3); }
+    .demo-text ul li.gray::before { background: var(--accent4); }
+
+    .demo-board {
+      display: grid;
+      grid-template-rows: repeat(4, 1fr);
+      gap: 5px;
+      max-width: 280px;
+      margin: 0 auto;
+    }
+    .demo-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+    }
+    .demo-cell {
+      aspect-ratio: 1;
+      border: 2px solid var(--border2);
+      border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 22px;
+      color: var(--text);
+      background: var(--bg2);
+      transition: all 350ms var(--ease-spring);
+    }
+    .demo-cell.green { background: var(--accent2); border-color: var(--accent2); color: var(--bg); }
+    .demo-cell.orange { background: var(--accent3); border-color: var(--accent3); color: var(--bg); }
+    .demo-cell.gray { background: var(--accent4); border-color: var(--accent4); color: var(--text); }
+
+    /* ─────────────  FAQ  ───────────── */
+    .faq-list {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+    }
+    .faq-q {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 500;
+      padding: 22px 0;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: color 200ms ease;
+    }
+    .faq-q:hover { color: var(--accent); }
+    .faq-icon {
+      width: 22px; height: 22px;
+      flex-shrink: 0;
+      transition: transform 300ms var(--ease-spring);
+      color: var(--text-muted);
+    }
+    .faq-item.open .faq-icon { transform: rotate(45deg); color: var(--accent); }
+    .faq-a {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: max-height 400ms var(--ease-out),
+                  opacity 300ms ease,
+                  padding 300ms ease;
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+    .faq-item.open .faq-a {
+      padding: 0 0 22px 0;
+      opacity: 1;
+    }
+
+    /* ─────────────  CTA SECTION  ───────────── */
+    .cta-section {
+      text-align: center;
+      padding: 100px 32px;
+      background: radial-gradient(ellipse at top,
+        rgba(232,197,71,0.08) 0%,
+        transparent 60%);
+      border-top: 1px solid var(--border);
+    }
+    .cta-section h2 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-bottom: 18px;
+      max-width: 720px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .cta-section p {
+      color: var(--text-muted);
+      font-size: 17px;
+      margin-bottom: 32px;
+    }
+
+    /* ─────────────  FOOTER  ───────────── */
+    footer {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 60px 32px 32px;
+    }
+    .footer-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+    @media (max-width: 700px) {
+      .footer-grid { grid-template-columns: 1fr; gap: 24px; }
+    }
+    .footer-brand .nav-logo {
+      font-size: 22px;
+      margin-bottom: 14px;
+    }
+    .footer-brand p {
+      color: var(--text-muted);
+      font-size: 14px;
+      max-width: 320px;
+      line-height: 1.7;
+    }
+    .footer-col h4 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+    .footer-col ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .footer-col a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 200ms ease;
+    }
+    .footer-col a:hover { color: var(--accent); }
+
+    .footer-bottom {
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    /* ─────────────  UTILITIES  ───────────── */
+    .arrow-icon {
+      width: 16px; height: 16px;
+      transition: transform 200ms var(--ease-out);
+    }
+    .btn:hover .arrow-icon { transform: translateX(3px); }
+
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════ NAV ═══════════ -->
+  <nav id="nav">
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-tile y">K</div>
+      <div class="nav-logo-tile g">E</div>
+      <span class="nav-logo-text">Kelimeci</span>
+    </a>
+    <div class="nav-links">
+      <a href="#modes">Modlar</a>
+      <a href="#features">Özellikler</a>
+      <a href="#faq">SSS</a>
+      <a href="#download" class="nav-cta">İndir</a>
+    </div>
+  </nav>
+
+  <!-- ═══════════ HERO ═══════════ -->
+  <section class="hero">
+    <div class="hero-tagline">
+      <span class="hero-tagline-dot"></span>
+      <span>Yakında Google Play'de</span>
+    </div>
+
+    <div class="hero-tiles">
+      <div class="hero-tile flipped" style="--d: 0.2s; --tile-color: var(--accent);">K</div>
+      <div class="hero-tile flipped" style="--d: 0.4s; --tile-color: var(--accent2);">E</div>
+      <div class="hero-tile flipped" style="--d: 0.6s; --tile-color: var(--accent4);">L</div>
+      <div class="hero-tile flipped" style="--d: 0.8s; --tile-color: var(--accent3);">İ</div>
+      <div class="hero-tile flipped" style="--d: 1.0s; --tile-color: var(--accent2);">M</div>
+      <div class="hero-tile flipped" style="--d: 1.2s; --tile-color: var(--accent);">E</div>
+      <div class="hero-tile flipped" style="--d: 1.4s; --tile-color: var(--accent2);">C</div>
+      <div class="hero-tile flipped" style="--d: 1.5s; --tile-color: var(--accent);">İ</div>
+    </div>
+
+    <h1 class="hero-title">
+      Türkçe kelimelerle bulmaca, <em>yedi farklı modda</em>
+    </h1>
+    <p class="hero-sub">
+      Anagram, Adam Asmaca, Wordle tarzı tahmin ve daha fazlası — her gün yeni bulmaca, serini koru,
+      liderlik tablosunda yarış. Türkçeye özel tasarlandı.
+    </p>
+
+    <div class="hero-cta">
+      <a href="#download" class="btn btn-primary">
+        Şimdi indir
+        <svg class="arrow-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 8h10M9 4l4 4-4 4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <a href="#modes" class="btn btn-secondary">Modları gör</a>
+    </div>
+
+    <div class="scroll-cue">↓ Aşağı kaydır</div>
+  </section>
+
+  <!-- ═══════════ MODES ═══════════ -->
+  <section class="content" id="modes">
+    <div class="reveal">
+      <span class="section-eyebrow">7 Oyun Modu</span>
+      <h2 class="section-title">Bir uygulamada tüm kelime bulmaca türleri</h2>
+      <p class="section-lede">
+        Her mod farklı bir mantık becerisi çalıştırır. Sıkıldığında yenisine geç,
+        gün boyu yeni bir bulmacanın peşinde koş.
+      </p>
+    </div>
+
+    <div class="modes-grid">
+
+      <div class="mode-card featured reveal" data-tilt>
+        <span class="mode-tag">Önerilen</span>
+        <div class="mode-num">01</div>
+        <div class="mode-icon">📅</div>
+        <div class="mode-name">Günlük Bulmaca</div>
+        <p class="mode-desc">Her gün yeni 5 bulmaca seti. Tüm modları sırayla çöz, serini koru ve liderlik tablosunda yüksel.</p>
+      </div>
+
+      <div class="mode-card reveal" data-tilt>
+        <div class="mode-num">02</div>
+        <div class="mode-icon">🔤</div>
+        <div class="mode-name">Harf Sıralama</div>
+        <p class="mode-desc">Karışık harfleri doğru sıraya diz. Görsel hafıza ve hızını test et.</p>
+      </div>
+
+      <div class="mode-card reveal" data-tilt>
+        <div class="mode-num">03</div>
+        <div class="mode-icon">🧩</div>
+        <div class="mode-name">Anagram</div>
+        <p class="mode-desc">Verilen harflerden geçerli kelimeler türet. Kelime hazineni keşfet.</p>
+      </div>
+
+      <div class="mode-card reveal" data-tilt>
+        <div class="mode-num">04</div>
+        <div class="mode-icon">⬜</div>
+        <div class="mode-name">Boşluk Doldur</div>
+        <p class="mode-desc">Eksik harfleri tahmin et. Bağlamdan kelimeyi tamamla.</p>
+      </div>
+
+      <div class="mode-card reveal" data-tilt>
+        <div class="mode-num">05</div>
+        <div class="mode-icon">🎯</div>
+        <div class="mode-name">Adam Asmaca</div>
+        <p class="mode-desc">6 hakla doğru kelimeyi bul. Yanlış harfler sayılır, dikkatli seç.</p>
+      </div>
+
+      <div class="mode-card reveal" data-tilt>
+        <div class="mode-num">06</div>
+        <div class="mode-icon">💡</div>
+        <div class="mode-name">Tahmin Et</div>
+        <p class="mode-desc">Wordle tarzı renk ipuçlarıyla 6 denemede kelimeyi yakala.</p>
+      </div>
+
+      <div class="mode-card reveal" data-tilt>
+        <div class="mode-num">07</div>
+        <div class="mode-icon">⚡</div>
+        <div class="mode-name">Hızlı Mod</div>
+        <p class="mode-desc">Süre dolmadan harfleri sırala. Hız rekoru kır, leaderboard'da öne çık.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════ HOW IT WORKS — WORDLE DEMO ═══════════ -->
+  <section class="content">
+    <div class="reveal">
+      <span class="section-eyebrow">Nasıl Çalışır</span>
+      <h2 class="section-title">Renk ipuçlarıyla doğru kelimeye giden yol</h2>
+      <p class="section-lede">Tahmin Et modu, dünyanın en sevilen kelime oyununun Türkçeye özel halini sunar. Her tahminden sonra harflerin durumu renklerle belli olur.</p>
+    </div>
+
+    <div class="demo-wrapper reveal">
+      <div class="demo-text">
+        <h3>Renkleri oku, kelimeyi yakala</h3>
+        <p>Kelimeci, dünyanın en sevilen kelime oyununun Türkçeye özel halini sunar. Her tahminden sonra harflerin durumu renklerle belli olur:</p>
+        <ul>
+          <li>Yeşil — harf doğru ve doğru yerde</li>
+          <li class="orange">Turuncu — harf kelimede var ama yanlış yerde</li>
+          <li class="gray">Gri — harf kelimede yok</li>
+        </ul>
+      </div>
+      <div class="demo-board" id="demoBoard">
+        <div class="demo-row">
+          <div class="demo-cell gray">A</div>
+          <div class="demo-cell orange">R</div>
+          <div class="demo-cell gray">M</div>
+          <div class="demo-cell gray">U</div>
+          <div class="demo-cell gray">T</div>
+        </div>
+        <div class="demo-row">
+          <div class="demo-cell green">K</div>
+          <div class="demo-cell gray">İ</div>
+          <div class="demo-cell green">R</div>
+          <div class="demo-cell gray">P</div>
+          <div class="demo-cell gray">İ</div>
+        </div>
+        <div class="demo-row">
+          <div class="demo-cell green">K</div>
+          <div class="demo-cell green">A</div>
+          <div class="demo-cell green">R</div>
+          <div class="demo-cell orange">A</div>
+          <div class="demo-cell gray">F</div>
+        </div>
+        <div class="demo-row">
+          <div class="demo-cell green">K</div>
+          <div class="demo-cell green">A</div>
+          <div class="demo-cell green">R</div>
+          <div class="demo-cell green">G</div>
+          <div class="demo-cell green">A</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ FEATURES ═══════════ -->
+  <section class="features-bg" id="features">
+    <div class="content">
+      <div class="reveal">
+        <span class="section-eyebrow">Öne Çıkan Özellikler</span>
+        <h2 class="section-title">Sadece bulmaca değil, motivasyon sistemi</h2>
+        <p class="section-lede">Her gün gelmek için bir sebep, geride kalmamak için takip ettiğin sayılar.</p>
+      </div>
+
+      <div class="features-grid reveal">
+        <div class="feature">
+          <div class="feature-emoji">🔥</div>
+          <div class="feature-title">Günlük Seri</div>
+          <div class="feature-desc">Her gün oyna, streak'ini büyüt. Bir günü atlasan bile streak dondurma korur.</div>
+        </div>
+        <div class="feature">
+          <div class="feature-emoji">🏆</div>
+          <div class="feature-title">Liderlik Tablosu</div>
+          <div class="feature-desc">Gerçek zamanlı sıralamada Türkiye genelinde yüksel.</div>
+        </div>
+        <div class="feature">
+          <div class="feature-emoji">🎖️</div>
+          <div class="feature-title">8 Rozet</div>
+          <div class="feature-desc">Farklı başarılar için rozet topla, koleksiyonunu profilinde sergile.</div>
+        </div>
+        <div class="feature">
+          <div class="feature-emoji">📊</div>
+          <div class="feature-title">İstatistikler</div>
+          <div class="feature-desc">Toplam gün, ortalama süre, mod bazlı performans — gelişimini sayılarla gör.</div>
+        </div>
+        <div class="feature">
+          <div class="feature-emoji">♾️</div>
+          <div class="feature-title">Sonsuz Mod</div>
+          <div class="feature-desc">3 canla sınırsız oyna. Can bitmeden ne kadar gidebilirsin?</div>
+        </div>
+        <div class="feature">
+          <div class="feature-emoji">🌙</div>
+          <div class="feature-title">Karanlık Tema</div>
+          <div class="feature-desc">Gözünü yormayan karanlık ya da klasik açık tema arasında geç.</div>
+        </div>
+        <div class="feature">
+          <div class="feature-emoji">📱</div>
+          <div class="feature-title">Çevrimdışı Oyna</div>
+          <div class="feature-desc">İnternetin yokken bile tüm modlar çalışır. Otobüste, metroda hep yanında.</div>
+        </div>
+        <div class="feature">
+          <div class="feature-emoji">📤</div>
+          <div class="feature-title">Sonuç Paylaş</div>
+          <div class="feature-desc">Wordle tarzı emoji grid ile günlük skorunu arkadaşlarına gönder.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ STATS ═══════════ -->
+  <section class="content">
+    <div class="reveal">
+      <span class="section-eyebrow">Rakamlarla</span>
+      <h2 class="section-title">Türkçeye özel bir kelime evreni</h2>
+    </div>
+    <div class="stats reveal">
+      <div class="stat">
+        <div class="stat-num" data-count="7">0</div>
+        <div class="stat-label">Oyun Modu</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" data-count="5000">0</div>
+        <div class="stat-label">Türkçe Kelime</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" data-count="8">0</div>
+        <div class="stat-label">Başarı Rozeti</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" data-count="365">0</div>
+        <div class="stat-label">Günlük Bulmaca / Yıl</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ FAQ ═══════════ -->
+  <section class="content" id="faq">
+    <div class="reveal">
+      <span class="section-eyebrow">Sıkça Sorulanlar</span>
+      <h2 class="section-title">Kafanı kurcalayanlar</h2>
+    </div>
+
+    <div class="faq-list reveal">
+      <div class="faq-item">
+        <button class="faq-q">
+          Kelimeci ücretsiz mi?
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="faq-a">Evet, Kelimeci'yi indirip oynamak ücretsizdir. Sonsuz Mod ve Hızlı Mod arası geçişlerde reklamlar gösterilir; Günlük Bulmaca modu reklamsızdır.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q">
+          İnternet bağlantısı gerekli mi?
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="faq-a">Hayır. Liderlik tablosu dışında tüm modlar çevrimdışı çalışır. Yolda, uçakta veya internetin olmadığı yerlerde rahatlıkla oynayabilirsin.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q">
+          Hesap oluşturmak zorunda mıyım?
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="faq-a">Hayır. Oyunu indirip hemen oynamaya başlayabilirsin. Yalnızca liderlik tablosuna katılmak istersen bir kullanıcı adı seçmen gerekir.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q">
+          Streak (seri) nasıl çalışır?
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="faq-a">Her gün en az bir Günlük Bulmaca tamamladığında streak'in büyür. Bir günü atlarsan streak dondurma özelliği serini bir kez korur — sonrasında devam edersen kaldığın yerden ilerlersin.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q">
+          Hangi cihazlarda çalışır?
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="faq-a">Şu an için Android cihazlarda Google Play üzerinden indirilebilir. iOS desteği yol haritamızda.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q">
+          Verilerim güvende mi?
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="faq-a">Tüm oyun ilerlemen yalnızca cihazında saklanır. Liderlik tablosu kullanıcı adı ve skorların ise Firebase'in güvenli altyapısında HTTPS ile şifrelenir. Detaylar için <a href="privacy-policy.html" style="color: var(--accent);">Gizlilik Politikası</a> sayfasına bak.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ CTA ═══════════ -->
+  <section class="cta-section" id="download">
+    <h2>Bir kelime, bir tahmin, bir gün uzaktasın</h2>
+    <p>Bugünün bulmacasını çöz, yarınki streak'ini garantile.</p>
+    <div class="hero-cta" style="justify-content: center;">
+      <a href="#" class="btn btn-primary" id="playstoreBtn">
+        <svg width="20" height="22" viewBox="0 0 22 24" fill="none">
+          <path d="M.667 1.333v21.333l11.5-10.667L.667 1.333z" fill="currentColor"/>
+          <path d="M16 7.333L12.167 11.5l3.833 4.167L21 12.167V11.5L16 7.333z" fill="currentColor" opacity="0.7"/>
+          <path d="M.667 1.333l11.5 10.667 3.833-4.167L1.5.5.667 1.333z" fill="currentColor" opacity="0.85"/>
+          <path d="M.667 22.667l15.333-7L12.167 11.5.667 22.667z" fill="currentColor" opacity="0.55"/>
+        </svg>
+        Google Play'de
+      </a>
+      <a href="#modes" class="btn btn-secondary">Önce nasıl olduğuna bak</a>
+    </div>
+  </section>
+
+  <!-- ═══════════ FOOTER ═══════════ -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#" class="nav-logo">
+            <div class="nav-logo-tile y">K</div>
+            <div class="nav-logo-tile g">E</div>
+            <span class="nav-logo-text">Kelimeci</span>
+          </a>
+          <p>7 farklı modda Türkçe kelime bulmaca oyunu. Her gün yeni bulmaca, her gün yeni hedef.</p>
+        </div>
+
+        <div class="footer-col">
+          <h4>Oyun</h4>
+          <ul>
+            <li><a href="#modes">Modlar</a></li>
+            <li><a href="#features">Özellikler</a></li>
+            <li><a href="#faq">SSS</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Yasal</h4>
+          <ul>
+            <li><a href="privacy-policy.html">Gizlilik Politikası</a></li>
+            <li><a href="mailto:privacy@kelimeci.app">İletişim</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2025 Kelimeci — tr.kelimeci.app</span>
+        <span>Türkiye'de tasarlandı 🇹🇷</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    /* ───── nav scroll state ───── */
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 20);
+    }, { passive: true });
+
+    /* ───── intersection observer reveal ───── */
+    const revealEls = document.querySelectorAll('.reveal');
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+    revealEls.forEach(el => io.observe(el));
+
+    /* ───── stagger mode cards ───── */
+    document.querySelectorAll('.modes-grid .mode-card').forEach((card, i) => {
+      card.style.transitionDelay = (i * 60) + 'ms';
+    });
+    document.querySelectorAll('.features-grid .feature').forEach((f, i) => {
+      f.style.transitionDelay = (i * 50) + 'ms';
+    });
+
+    /* ───── mode card mouse-follow gradient ───── */
+    document.querySelectorAll('.mode-card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const mx = ((e.clientX - rect.left) / rect.width) * 100;
+        const my = ((e.clientY - rect.top) / rect.height) * 100;
+        card.style.setProperty('--mx', mx + '%');
+        card.style.setProperty('--my', my + '%');
+      });
+    });
+
+    /* ───── stat counter ───── */
+    const statsObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.querySelectorAll('[data-count]').forEach(el => {
+            const target = parseInt(el.dataset.count, 10);
+            const start = performance.now();
+            const dur = 1400;
+            const update = (now) => {
+              const t = Math.min((now - start) / dur, 1);
+              const eased = 1 - Math.pow(1 - t, 3);
+              const value = Math.round(eased * target);
+              el.textContent = value >= 1000 ? value.toLocaleString('tr-TR') + '+' : value;
+              if (t < 1) requestAnimationFrame(update);
+            };
+            requestAnimationFrame(update);
+          });
+          statsObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.4 });
+    document.querySelectorAll('.stats').forEach(s => statsObserver.observe(s));
+
+    /* ───── FAQ accordion ───── */
+    document.querySelectorAll('.faq-q').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = btn.parentElement;
+        const answer = item.querySelector('.faq-a');
+        const wasOpen = item.classList.contains('open');
+
+        // close all others
+        document.querySelectorAll('.faq-item.open').forEach(other => {
+          if (other !== item) {
+            other.classList.remove('open');
+            other.querySelector('.faq-a').style.maxHeight = '0px';
+          }
+        });
+
+        if (wasOpen) {
+          item.classList.remove('open');
+          answer.style.maxHeight = '0px';
+        } else {
+          item.classList.add('open');
+          answer.style.maxHeight = answer.scrollHeight + 'px';
+        }
+      });
+    });
+
+    /* ───── playstore link placeholder ───── */
+    const psBtn = document.getElementById('playstoreBtn');
+    if (psBtn) {
+      psBtn.addEventListener('click', (e) => {
+        // when published, change href to: https://play.google.com/store/apps/details?id=tr.kelimeci.app
+        if (psBtn.getAttribute('href') === '#') {
+          e.preventDefault();
+          psBtn.style.transition = 'transform 200ms';
+          psBtn.style.transform = 'translateX(-4px)';
+          setTimeout(() => { psBtn.style.transform = 'translateX(4px)'; }, 100);
+          setTimeout(() => { psBtn.style.transform = ''; }, 200);
+        }
+      });
+    }
+  </script>
+</body>
+</html>

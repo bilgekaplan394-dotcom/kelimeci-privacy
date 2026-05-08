@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gizlilik Politikası — Kelimeci</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --surface2: #242424;
+      --border: #2e2e2e;
+      --text: #f0ece3;
+      --text-muted: #888;
+      --accent: #e8c547;
+      --accent2: #5bc47a;
+      --accent3: #c47a5b;
+      --tile-size: 48px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.8;
+      min-height: 100vh;
+    }
+
+    /* ── Tile decoration ── */
+    .tiles-bg {
+      position: fixed;
+      top: 0; right: 0;
+      width: 260px;
+      height: 100vh;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+      opacity: 0.07;
+    }
+    .tile-grid {
+      display: grid;
+      grid-template-columns: repeat(5, var(--tile-size));
+      gap: 6px;
+      padding: 24px;
+      transform: rotate(-8deg) translate(20px, -30px);
+    }
+    .tile {
+      width: var(--tile-size);
+      height: var(--tile-size);
+      border: 2px solid var(--accent);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      color: var(--accent);
+      animation: tileFlicker 4s ease-in-out infinite;
+      animation-delay: var(--d, 0s);
+    }
+    .tile.green { border-color: var(--accent2); color: var(--accent2); }
+    .tile.orange { border-color: var(--accent3); color: var(--accent3); }
+    @keyframes tileFlicker {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── Layout ── */
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 64px 32px 80px;
+    }
+
+    /* ── Header ── */
+    header {
+      margin-bottom: 56px;
+    }
+    .logo-mark {
+      display: inline-flex;
+      gap: 4px;
+      margin-bottom: 24px;
+    }
+    .logo-tile {
+      width: 36px; height: 36px;
+      border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: -0.5px;
+    }
+    .logo-tile.y { background: var(--accent); color: #0f0f0f; }
+    .logo-tile.g { background: var(--accent2); color: #0f0f0f; }
+    .logo-tile.o { background: var(--accent3); color: #0f0f0f; }
+    .logo-tile.d { background: var(--surface2); color: var(--text); border: 1.5px solid var(--border); }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(28px, 5vw, 44px);
+      line-height: 1.1;
+      letter-spacing: -1px;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    h1 span { color: var(--accent); }
+
+    .meta {
+      font-size: 13px;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+    .meta strong { color: var(--accent); font-weight: 500; }
+
+    .intro-card {
+      margin-top: 28px;
+      padding: 20px 24px;
+      background: var(--surface2);
+      border-left: 3px solid var(--accent2);
+      border-radius: 0 8px 8px 0;
+      font-size: 14.5px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+    .intro-card strong { color: var(--text); font-weight: 500; }
+
+    /* ── Sections ── */
+    .section {
+      margin-bottom: 48px;
+    }
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .section-num {
+      width: 28px; height: 28px;
+      background: var(--accent);
+      color: #0f0f0f;
+      border-radius: 5px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 12px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .section-num.green { background: var(--accent2); }
+    .section-num.orange { background: var(--accent3); }
+    .section-num.neutral { background: var(--surface2); color: var(--text); border: 1.5px solid var(--border); }
+
+    h2 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--text);
+      letter-spacing: -0.2px;
+    }
+
+    p {
+      font-size: 15px;
+      color: #c8c4bc;
+      margin-bottom: 14px;
+    }
+    p:last-child { margin-bottom: 0; }
+
+    /* ── Data table ── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 14px;
+    }
+    .data-table th {
+      text-align: left;
+      padding: 10px 14px;
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+    }
+    .data-table th:first-child { border-radius: 8px 0 0 0; }
+    .data-table th:last-child { border-radius: 0 8px 0 0; }
+    .data-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      color: #c8c4bc;
+      vertical-align: top;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: var(--surface2); }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+    }
+    .badge-yellow { background: rgba(232,197,71,0.15); color: var(--accent); }
+    .badge-green { background: rgba(91,196,122,0.15); color: var(--accent2); }
+    .badge-orange { background: rgba(196,122,91,0.15); color: var(--accent3); }
+    .badge-gray { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
+
+    /* ── Highlight box ── */
+    .highlight-box {
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin-top: 14px;
+      font-size: 14.5px;
+    }
+    .highlight-box.green {
+      background: rgba(91,196,122,0.07);
+      border: 1px solid rgba(91,196,122,0.2);
+      color: #a8e0b8;
+    }
+    .highlight-box.yellow {
+      background: rgba(232,197,71,0.07);
+      border: 1px solid rgba(232,197,71,0.2);
+      color: #dfc97a;
+    }
+    .highlight-box.orange {
+      background: rgba(196,122,91,0.07);
+      border: 1px solid rgba(196,122,91,0.2);
+      color: #d4a090;
+    }
+
+    ul.clean {
+      list-style: none;
+      padding: 0;
+      margin-top: 12px;
+    }
+    ul.clean li {
+      padding: 8px 0 8px 22px;
+      position: relative;
+      font-size: 14.5px;
+      color: #c8c4bc;
+      border-bottom: 1px solid var(--border);
+    }
+    ul.clean li:last-child { border-bottom: none; }
+    ul.clean li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-size: 12px;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 40px 0;
+    }
+
+    /* ── Contact card ── */
+    .contact-card {
+      padding: 28px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .contact-icon {
+      width: 44px; height: 44px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 20px;
+    }
+    .contact-card h3 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+    .contact-card p { font-size: 14px; margin-bottom: 8px; }
+    .contact-card a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .contact-card a:hover { text-decoration: underline; }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 56px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    @media (max-width: 600px) {
+      .wrapper { padding: 40px 20px 60px; }
+      .contact-card { flex-direction: column; }
+      .tiles-bg { display: none; }
+      footer { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Decorative tile background -->
+  <div class="tiles-bg">
+    <div class="tile-grid">
+      <div class="tile" style="--d:0s">K</div>
+      <div class="tile green" style="--d:0.3s">E</div>
+      <div class="tile" style="--d:0.6s">L</div>
+      <div class="tile orange" style="--d:0.9s">İ</div>
+      <div class="tile" style="--d:1.2s">M</div>
+
+      <div class="tile orange" style="--d:0.5s">E</div>
+      <div class="tile" style="--d:0.8s">C</div>
+      <div class="tile green" style="--d:1.1s">İ</div>
+      <div class="tile" style="--d:1.4s">_</div>
+      <div class="tile" style="--d:1.7s">_</div>
+
+      <div class="tile" style="--d:1.0s">A</div>
+      <div class="tile" style="--d:1.3s">N</div>
+      <div class="tile orange" style="--d:1.6s">A</div>
+      <div class="tile green" style="--d:1.9s">G</div>
+      <div class="tile" style="--d:2.2s">R</div>
+
+      <div class="tile green" style="--d:1.5s">A</div>
+      <div class="tile" style="--d:1.8s">M</div>
+      <div class="tile" style="--d:2.1s">_</div>
+      <div class="tile orange" style="--d:2.4s">H</div>
+      <div class="tile" style="--d:2.7s">A</div>
+
+      <div class="tile" style="--d:2.0s">R</div>
+      <div class="tile green" style="--d:2.3s">F</div>
+      <div class="tile" style="--d:2.6s">_</div>
+      <div class="tile" style="--d:2.9s">K</div>
+      <div class="tile orange" style="--d:3.2s">E</div>
+    </div>
+  </div>
+
+  <div class="wrapper">
+
+    <!-- Header -->
+    <header>
+      <div class="logo-mark">
+        <div class="logo-tile y">K</div>
+        <div class="logo-tile g">E</div>
+        <div class="logo-tile d">L</div>
+        <div class="logo-tile o">İ</div>
+        <div class="logo-tile d">M</div>
+        <div class="logo-tile y">E</div>
+        <div class="logo-tile g">C</div>
+        <div class="logo-tile d">İ</div>
+      </div>
+      <h1>Gizlilik<br /><span>Politikası</span></h1>
+      <p class="meta">
+        Paket adı: <strong>tr.kelimeci.app</strong> &nbsp;·&nbsp;
+        Son güncelleme: <strong>Mayıs 2025</strong>
+      </p>
+      <div class="intro-card">
+        Bu belge, <strong>Kelimeci</strong> uygulamasının kişisel verilerinizi nasıl topladığını,
+        kullandığını ve koruduğunu açıklar. Uygulamayı indirerek veya kullanarak bu politikayı
+        kabul etmiş sayılırsınız. Herhangi bir sorunuz için lütfen aşağıdaki iletişim
+        adresine başvurun.
+      </div>
+    </header>
+
+    <!-- 1. Toplanan Veriler -->
+    <div class="section">
+      <div class="section-label">
+        <div class="section-num">1</div>
+        <h2>Toplanan Veriler</h2>
+      </div>
+      <p>Kelimeci, aşağıdaki veri kategorilerini toplar. Veriler yalnızca belirtilen amaçlarla kullanılır.</p>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Veri</th>
+            <th>Amaç</th>
+            <th>Depolama</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Oyun ilerlemesi, streak, istatistikler, rozetler</td>
+            <td>Oyun deneyimini sürdürme</td>
+            <td><span class="badge badge-green">Yalnızca cihaz</span></td>
+          </tr>
+          <tr>
+            <td>Kullanıcı adı, liderlik tablosu skoru</td>
+            <td>Gerçek zamanlı sıralama</td>
+            <td><span class="badge badge-yellow">Firebase Firestore</span></td>
+          </tr>
+          <tr>
+            <td>Reklam tanımlayıcısı (IDFA/GAID), reklam etkileşimi</td>
+            <td>Reklam sunma (AdMob)</td>
+            <td><span class="badge badge-orange">Google AdMob</span></td>
+          </tr>
+          <tr>
+            <td>Bildirim izni, hatırlatma saati tercihi</td>
+            <td>Günlük bulmaca hatırlatması</td>
+            <td><span class="badge badge-green">Yalnızca cihaz</span></td>
+          </tr>
+          <tr>
+            <td>Uygulama çöküş ve hata logları</td>
+            <td>Teknik iyileştirme</td>
+            <td><span class="badge badge-gray">Firebase Crashlytics*</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size:12px; color: var(--text-muted); margin-top: 10px;">
+        * Crashlytics yalnızca teknik hata ayıklama amacıyla kullanılır; kimlik bilgisi içermez.
+      </p>
+    </div>
+
+    <!-- 2. Toplamadığımız Veriler -->
+    <div class="section">
+      <div class="section-label">
+        <div class="section-num green">2</div>
+        <h2>Toplamadığımız Veriler</h2>
+      </div>
+      <div class="highlight-box green">
+        Kelimeci; ad, soyad, e-posta, telefon numarası, konum, fotoğraf, mikrofon kaydı
+        veya herhangi bir hassas kişisel bilgi <strong>toplamaz</strong>. Kayıt veya giriş zorunluluğu yoktur.
+        Liderlik tablosuna katılım tamamen isteğe bağlıdır.
+      </div>
+    </div>
+
+    <!-- 3. Çevrimdışı Kullanım -->
+    <div class="section">
+      <div class="section-label">
+        <div class="section-num green">3</div>
+        <h2>Çevrimdışı Kullanım</h2>
+      </div>
+      <p>
+        Liderlik tablosu özelliği dışında tüm oyun modları — Günlük Bulmaca, Harf Sıralama,
+        Anagram, Boşluk Doldur, Adam Asmaca, Tahmin Et ve Hızlı Mod — internet bağlantısı
+        gerektirmez. Çevrimdışı oynadığınızda sunuculara herhangi bir veri gönderilmez.
+      </p>
+    </div>
+
+    <!-- 4. Üçüncü Taraf Hizmetler -->
+    <div class="section">
+      <div class="section-label">
+        <div class="section-num orange">4</div>
+        <h2>Üçüncü Taraf Hizmetler</h2>
+      </div>
+      <p>Kelimeci aşağıdaki üçüncü taraf hizmetleri kullanmaktadır. Her hizmetin kendi gizlilik politikası geçerlidir.</p>
+
+      <ul class="clean">
+        <li>
+          <strong>Google AdMob</strong> — Uygulama içi reklam sunmak için kullanılır.
+          AdMob; cihaz tanımlayıcısı ve reklam etkileşim verisini kendi gizlilik politikasına
+          göre işleyebilir.
+          <br /><a href="https://policies.google.com/privacy" target="_blank" rel="noopener" style="color:var(--accent); font-size:13px;">→ Google Gizlilik Politikası</a>
+        </li>
+        <li>
+          <strong>Google Firebase Firestore</strong> — Liderlik tablosu verilerini (kullanıcı adı + skor)
+          depolamak için kullanılır. Bu özelliği kullanmayı seçmezseniz hiçbir veri Firestore'a gönderilmez.
+          <br /><a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener" style="color:var(--accent); font-size:13px;">→ Firebase Gizlilik Politikası</a>
+        </li>
+        <li>
+          <strong>Google Firebase Crashlytics</strong> — Uygulama çöküşlerini ve hataları
+          tespit etmek için kullanılır. Raporlar kimliksiz teknik verilerden oluşur.
+          <br /><a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener" style="color:var(--accent); font-size:13px;">→ Firebase Gizlilik Politikası</a>
+        </li>
+      </ul>
+
+      <div class="highlight-box yellow" style="margin-top:18px;">
+        Verilerinizi reklam ağlarıyla veya üçüncü taraflarla <strong>satmıyoruz, kiralamıyoruz veya ticaretini yapmıyoruz.</strong>
+      </div>
+    </div>
+
+    <!-- 5. Reklamlar -->
+    <div class="section">
+      <div class="section-label">
+        <div class="section-num orange">5</div>
+        <h2>Reklamlar</h2>
+      </div>
+      <p>
+        Günlük Bulmaca modu reklam içermez. Sonsuz Mod ve Hızlı Mod geçişlerinde geçiş reklamları
+        (interstitial) gösterilir. Sonsuz Mod'da can kazanmak için ödüllü reklam (rewarded ad)
+        <strong>isteğe bağlı</strong> olarak izlenebilir; bu reklam sizi asla zorla yönlendirmez.
+      </p>
+      <p>
+        AdMob, kullanıcı deneyimini kişiselleştirmek amacıyla reklam tanımlayıcısını kullanabilir.
+        Kişiselleştirilmiş reklamları cihaz Ayarlar &gt; Google &gt; Reklamlar bölümünden
+        devre dışı bırakabilirsiniz.
+      </p>
+    </div>
+
+    <!-- 6. Çocukların Gizliliği -->
+    <div class="section">
+      <div class="section-label">
+        <div class="section-num neutral">6</div>
+        <h2>Çocukların Gizliliği</h2>
+      </div>
+      <p>
+        Kelimeci her yaştan kullanıcıya yöneliktir. 13 yaş altı çocuklardan bilerek
+        kişisel veri toplamıyoruz. Ebeveynler veya veliler, çocuklarına ait herhangi bir
+        veri olduğunu düşünürlerse aşağıdaki iletişim adresinden bizimle iletişime
+        geçebilir; söz konusu veriler en kısa sürede silinir.
+      </p>
+      <p>
+        Uygulamanın reklam içerdiğini ve Google Play'in aile politikasına
+        uyum konusunda özen gösterdiğimizi belirtmek isteriz.
+      </p>
+    </div>
+
+    <!-- 7. Veri Güvenliği -->
+    <div class="section">
+      <div class="section-label">
+        <div class="section-num neutral">7</div>
+        <h2>Veri Güvenliği</h2>
+      </div>
+      <p>
+        Cihazda saklanan veriler (oyun ilerlemesi, streak, istatistikler) yalnızca sizin
+        cihazınızda bulunur ve uygulamayı kaldırdığınızda silinir.
+        Liderlik tablosu verileri Firebase'in güvenli altyapısında şifreli olarak depolanır.
+      </p>
+      <p>
+        İnternet üzerinden iletilen veriler (liderlik tablosu senkronizasyonu)
+        HTTPS/TLS şifrelemesiyle korunur.
+      </p>
+    </div>
+
+    <!-- 8. Haklarınız -->
+    <div class="section">
+      <div class="section-label">
+        <div class="section-num neutral">8</div>
+        <h2>Haklarınız</h2>
+      </div>
+      <p>Aşağıdaki haklara sahipsiniz:</p>
+      <ul class="clean">
+        <li><strong>Erişim hakkı</strong> — Hakkınızda sakladığımız verileri öğrenme</li>
+        <li><strong>Silme hakkı</strong> — Liderlik tablosu kaydınızın silinmesini talep etme</li>
+        <li><strong>İtiraz hakkı</strong> — Reklam kişiselleştirmeye itiraz etme (cihaz ayarlarından)</li>
+        <li><strong>Şikayet hakkı</strong> — Kişisel Verileri Koruma Kurumu'na (KVKK) başvurma</li>
+      </ul>
+      <p style="margin-top:14px;">
+        Talepleriniz için aşağıdaki iletişim adresine yazabilirsiniz. Talepler en geç
+        <strong>30 gün</strong> içinde yanıtlanır.
+      </p>
+    </div>
+
+    <!-- 9. Değişiklikler -->
+    <div class="section">
+      <div class="section-label">
+        <div class="section-num neutral">9</div>
+        <h2>Politika Değişiklikleri</h2>
+      </div>
+      <p>
+        Bu gizlilik politikası zaman zaman güncellenebilir. Önemli değişiklikler
+        uygulama içi bildirim veya bu sayfanın güncellenmesi yoluyla duyurulur.
+        Güncel politika her zaman bu sayfada yayınlanır.
+      </p>
+      <p>
+        Uygulamayı kullanmaya devam etmeniz, güncel politikayı kabul ettiğiniz
+        anlamına gelir.
+      </p>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- İletişim -->
+    <div class="contact-card">
+      <div class="contact-icon">✉️</div>
+      <div>
+        <h3>İletişim</h3>
+        <p>Gizlilik politikasıyla ilgili soru, talep veya şikayetleriniz için:</p>
+        <a href="mailto:privacy@kelimeci.app">bilgekaplan394@gmail.com</a><br />
+        <span style="font-size:13px; color:var(--text-muted); margin-top:4px; display:block;">
+          Paket: tr.kelimeci.app &nbsp;·&nbsp; Geliştirici: Kelimeci Ekibi
+        </span>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <span>© 2025 Kelimeci — tr.kelimeci.app</span>
+      <span>KVKK Uyumlu &nbsp;·&nbsp; Sürüm 1.0</span>
+    </footer>
+
+  </div>
+</body>
+</html>
